@@ -5,9 +5,17 @@ import express from "express"
 const app = express()
 const server = http.createServer(app)
 
+const defaultOrigins = ["http://localhost:5173"]
+const envOrigins = (process.env.CORS_ORIGINS || process.env.CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])]
+
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:5173"]
+        origin: allowedOrigins,
+        credentials: true
     }
 })
 
