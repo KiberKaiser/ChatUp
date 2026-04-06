@@ -5,16 +5,36 @@ import express from "express"
 const app = express()
 const server = http.createServer(app)
 
+const normalizeOrigin = (value) => value?.trim().replace(/\/$/, "")
 const defaultOrigins = ["http://localhost:5173"]
 const envOrigins = (process.env.CORS_ORIGINS || process.env.CLIENT_URL || "")
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => normalizeOrigin(origin))
     .filter(Boolean)
-const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])]
+const allowedOrigins = [...new Set([...defaultOrigins.map(normalizeOrigin), ...envOrigins])]
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true
+
+    const normalized = normalizeOrigin(origin)
+    if (allowedOrigins.includes(normalized)) return true
+
+    try {
+        const hostname = new URL(normalized).hostname
+        return hostname.endsWith(".vercel.app")
+    } catch {
+        return false
+    }
+}
 
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: (origin, callback) => {
+            if (isAllowedOrigin(origin)) {
+                return callback(null, true)
+            }
+            return callback(null, false)
+        },
         credentials: true
     }
 })
