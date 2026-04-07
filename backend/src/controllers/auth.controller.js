@@ -32,7 +32,7 @@ export const signup = async (req, res) => {
       nickname: normalizedNickname,
       email,
       password: hashedPassword,
-    });н
+    });
 
     if (newUser) {
       const token = generateToken(newUser._id, res);
